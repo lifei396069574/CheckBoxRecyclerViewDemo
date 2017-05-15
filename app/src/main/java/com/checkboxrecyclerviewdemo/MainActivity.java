@@ -1,26 +1,42 @@
 package com.checkboxrecyclerviewdemo;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
 
 import com.checkboxrecyclerviewdemo.adapter.MyRecyAdapter;
+import com.checkboxrecyclerviewdemo.bean.JavaBean;
+import com.checkboxrecyclerviewdemo.utils.MessageEvent;
+import com.checkboxrecyclerviewdemo.utils.MyUrl;
+import com.checkboxrecyclerviewdemo.utils.OkHttpManager;
+import com.google.gson.Gson;
 
-import java.io.File;
+import org.greenrobot.eventbus.EventBus;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+import okhttp3.Request;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     private RecyclerView recyclerView;
-    private ArrayList<String> mList;
     private MyRecyAdapter mMyRecyAdapter;
+    private Button button_go;
+    private List<JavaBean.DataBean> mData;
+    private List<JavaBean.DataBean> mList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,18 +49,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initData() {
-        mList = new ArrayList<>();
-        File directory = Environment.getExternalStorageDirectory();
-        File[] files = directory.listFiles();
-        for (File file : files) {
-            mList.add(file.getName());
-        }
 
-        setData();
+        OkHttpManager.getAsync(MyUrl.url, new OkHttpManager.DataCallBack() {
+            @Override
+            public void requestFailure(Request request, IOException e) {
+                Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void requestSuccess(String result) throws Exception {
+                Gson gson = new Gson();
+                JavaBean javaBean = gson.fromJson(result, JavaBean.class);
+                mData = javaBean.getData();
+                setData();
+            }
+        });
+
+
     }
 
     private void setData() {
-        mMyRecyAdapter = new MyRecyAdapter(mList, this);
+        mMyRecyAdapter = new MyRecyAdapter(mData, this);
         recyclerView.setAdapter(mMyRecyAdapter);
 
         mMyRecyAdapter.setRecyclerViewOnItemClickListener(new MyRecyAdapter.RecyclerViewOnItemClickListener() {
@@ -71,7 +96,10 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = (RecyclerView) findViewById(R.id.RecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));
 
+        button_go = (Button) findViewById(R.id.button_go);
+        button_go.setOnClickListener(this);
     }
 
     @Override
@@ -101,5 +129,31 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.button_go:
+                chuan();
+
+                break;
+        }
+    }
+
+    public void chuan(){
+
+        mList = new ArrayList<JavaBean.DataBean>();
+
+        Map<Integer, Boolean> map = mMyRecyAdapter.getMap();
+        for (int i = 0; i < map.size(); i++) {
+            if (map.get(i)){
+                mList.add(mData.get(i));
+            }
+        }
+        Log.i("zzz","mList : " + mList.size());
+        EventBus.getDefault().postSticky(new MessageEvent(mList));
+        startActivity(new Intent(this,SecActivity.class));
+
     }
 }

@@ -9,13 +9,18 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.checkboxrecyclerviewdemo.R;
+import com.checkboxrecyclerviewdemo.bean.JavaBean;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import it.sephiroth.android.library.picasso.Picasso;
 
 /**
  * 作者：李飞 on 2017/5/12 20:07
@@ -25,7 +30,7 @@ import java.util.Map;
 public class MyRecyAdapter extends RecyclerView.Adapter<MyRecyAdapter.ViewHolder>
         implements View.OnClickListener, View.OnLongClickListener {
     //数据源
-    private List<String> list;
+    private List<JavaBean.DataBean> list;
     private Context context;
     //是否显示单选框,默认false
     private boolean isshowBox = false;
@@ -34,7 +39,7 @@ public class MyRecyAdapter extends RecyclerView.Adapter<MyRecyAdapter.ViewHolder
     //接口实例
     private RecyclerViewOnItemClickListener onItemClickListener;
 
-    public MyRecyAdapter(List<String> list, Context context) {
+    public MyRecyAdapter(List<JavaBean.DataBean> list, Context context) {
         this.list = list;
         this.context = context;
         initMap();
@@ -51,6 +56,7 @@ public class MyRecyAdapter extends RecyclerView.Adapter<MyRecyAdapter.ViewHolder
     public class ViewHolder extends RecyclerView.ViewHolder {
         private TextView title;
         private CheckBox checkBox;
+        private ImageView image;
         private View root;
 
         public ViewHolder(View root) {
@@ -58,6 +64,7 @@ public class MyRecyAdapter extends RecyclerView.Adapter<MyRecyAdapter.ViewHolder
             this.root = root;
             title = (TextView) root.findViewById(R.id.tv);
             checkBox = (CheckBox) root.findViewById(R.id.cb);
+            image  = (ImageView) root.findViewById(R.id.image);
         }
     }
 
@@ -69,7 +76,13 @@ public class MyRecyAdapter extends RecyclerView.Adapter<MyRecyAdapter.ViewHolder
     //绑定视图管理者
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        holder.title.setText(list.get(position));
+        holder.title.setText(list.get(position).getGoods_name());
+        if (position%2==0){
+            Glide.with(context).load(list.get(position).getGoods_img()).error(R.mipmap.ic_launcher).into(holder.image);
+        }else {
+            Picasso.with(context).load(list.get(position).getGoods_img()).error(R.mipmap.ic_launcher).into(holder.image);
+        }
+
         //长按显示/隐藏
         if (isshowBox) {
             holder.checkBox.setVisibility(View.VISIBLE);
